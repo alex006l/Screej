@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"name": "deej2.2",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"opera.c": "cpp",
+			"xbm": "cpp",
+			"typedef-timage.c": "cpp"
+		}
+	}
+}
