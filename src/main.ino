@@ -7,9 +7,13 @@
 #include <assets/logos.h>
 #include <assets/display_definition.h>
 
+// #define Adafruit_12832
+//  #define Adafruit_12864
 
-#define 12832
-//#define 12864
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
+#define OLED_RESET -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 const int NUM_SLIDERS = 6;
@@ -44,6 +48,11 @@ int fillWidth = map(VolumeValue, 0, 1023, 0, boxFillWidth);
 bool sliderValueChanged = false; // Flag to check if any slider value has changed
 const int CHANGE_THRESHOLD = 25; // Change threshold value
 
+bool timeoutFl = false;
+bool timeoutFlFl = false;
+unsigned long displayTimeout = 0;
+const unsigned long displayTimeoutDuration = 30000;
+
 void handleSliderChange(int sliderIndex);
 void displayProgressBars(int sliderIndex);
 void displayLogo(int sliderIndex);
@@ -72,7 +81,7 @@ void sendSliderValues()
         }
     }
 
-    Serial.println(builtString);
+    // Serial.println(builtString);
 }
 
 void printSliderValues()
@@ -101,9 +110,19 @@ void handleSliderChange(int sliderIndex)
    
    
         display.clearDisplay();
+
+        if (timeoutFl == false)
+        {
+
         displayProgressBars(sliderIndex);
         displayLogo(sliderIndex);
-    
+        }
+        else
+        {
+
+        display.clearDisplay();
+        }
+
     //delay(10);
     //displayTimer = millis();
     }
@@ -111,6 +130,7 @@ void handleSliderChange(int sliderIndex)
 
 void displayProgressBars(int sliderIndex){
     VolumeValue = analogSliderValues[sliderIndex];
+
     display.drawRect(boxX, boxY, boxWidth, boxHeight, WHITE); //draw the outside box
 
     // Map the slider value to a percentage
@@ -150,6 +170,13 @@ void displayLogo(int sliderIndex)
     if (sliderIndex == 0) {
         if (analogSliderValues[0] > 968)
         {
+            if (timeoutFlFl == false)
+            {
+                Serial.println("displayTimeout = millis()");
+                displayTimeout = millis();
+                timeoutFlFl = true;
+            }
+
             display.drawXBitmap(0, 0, volume_mute, volume_mute_width, volume_mute_height, SSD1306_WHITE);
             //Serial.println("volume mute");
         }
@@ -251,8 +278,14 @@ void loop(void)
     //Serial.println("loop");
     updateSliderValues();
 //handleSliderChange(sliderIndex);
+    if (millis() - displayTimeout >= displayTimeoutDuration && timeoutFlFl == true) //&& analogSliderValues[0] > 968)
+    {
+        timeoutFl = true;
+        Serial.println("timeout!");
+        display.clearDisplay();
+        display.display();
+    }
 
-    
     // Check if any slider value has changed
     for (int i = 0; i < NUM_SLIDERS; i++)
     {   
@@ -260,6 +293,9 @@ void loop(void)
 
         if (abs(analogSliderValues[i] - prevSliderValues[i]) >= CHANGE_THRESHOLD)
         {
+            timeoutFlFl = false;
+            timeoutFl = false;
+            Serial.println("timeoutFl false");
             sliderValueChanged = true;
             prevSliderValues[i] = analogSliderValues[i];
             displayTimer = millis();
@@ -268,23 +304,24 @@ void loop(void)
             //printSliderValues(); // For debug
             // Check if it's time to display the progress bars
             // Slider value has changed, determine which slider it was
-        handleSliderChange(sliderIndex);
-        sendSliderValues();// Actually send data (all the time)
-            
-            
+
+            handleSliderChange(sliderIndex);
+            sendSliderValues(); // Actually send data (all the time)
         }
-        else if (millis() - displayTimer >= displayDuration && sliderValueChanged != false){
-        sliderIndex = 0;
-        sliderValueChanged = false;
-        handleSliderChange(sliderIndex);
-        sendSliderValues();// Actually send data (all the time)
-    }
+        else if (millis() - displayTimer >= displayDuration && sliderValueChanged != false && timeoutFl == false)
+        {
+            sliderIndex = 0;
+            sliderValueChanged = false;
+            handleSliderChange(sliderIndex);
+            sendSliderValues(); // Actually send data (all the time)
+        }
+
         // Update the previous slider values
 
         // Update the previous slider values
-        //memcpy(prevSliderValues, analogSliderValues, sizeof(analogSliderValues));
+        // memcpy(prevSliderValues, analogSliderValues, sizeof(analogSliderValues));
 
-//Serial.println(sliderIndex);
+        // Serial.println(sliderIndex);
     }
     
 }
