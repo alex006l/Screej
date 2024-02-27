@@ -6,7 +6,7 @@ This Arduino sketch is designed to control an OLED display and interact with mul
 It displays progress bars for each slider and changes the logo/icon on the screen based on the slider values. 
 The OLED display used in this code is an Adafruit SSD1306 display 0.91'.
 
-![alt text](https://photos.app.goo.gl/RqHw4XTyQRgmrgVD9)
+![alt text](https://github.com/alex006l/Screej/blob/master/IMG_20230702_131541.jpg?raw=true)
 
 Here are some pictures of the finished project:
 https://photos.app.goo.gl/zQjg9iCrh4X4q41z8
